@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import time
-from scipy.signal import butter, filtfilt, find_peaks, savgol_filter
 import collections
 
 # =========================
@@ -38,48 +37,55 @@ def butter_bandpass_filter(data, lowcut, highcut, fs):
 # 🔥 MAIN FUNCTION (IMPORTANT)
 # =========================
 def process_frame(frame):
-    global buffer_r, buffer_g, times, bpm, bpm_history
+    global buffer_g, times
 
-    frame = cv2.flip(frame, 1)
+    import time
+    import numpy as np
+    import cv2
+
+    frame = cv2.resize(frame, (320, 240))
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+    faces = face_cascade.detectMultiScale(gray, 1.2, 5)
 
     if len(faces) == 0:
         return 0
 
     (x, y, w, h) = faces[0]
 
-    # ROI (forehead)
-    fx = x + int(w * 0.3)
-    fy = y + int(h * 0.1)
-    fw = int(w * 0.4)
-    fh = int(h * 0.2)
+    roi = frame[y:y+h//2, x:x+w]
 
-    if fy + fh > frame.shape[0] or fx + fw > frame.shape[1]:
-        return 0
-
-    roi = frame[fy:fy + fh, fx:fx + fw]
-
-    # Extract signal
-    r = np.mean(roi[:, :, 2])
     g = np.mean(roi[:, :, 1])
 
-    current_time = time.time()
-
-    buffer_r.append(r)
     buffer_g.append(g)
-    times.append(current_time)
+    times.append(time.time())
 
-    # Keep buffer size fixed
-    if len(buffer_g) > buffer_size:
-        buffer_r = buffer_r[-buffer_size:]
-        buffer_g = buffer_g[-buffer_size:]
-        times = times[-buffer_size:]
+    # keep buffer
+    if len(buffer_g) > 100:
+        buffer_g = buffer_g[-100:]
+        times = times[-100:]
 
-    # Need enough data
-    if len(buffer_g) < 75:
+    # need enough data
+    if len(buffer_g) < 50:
         return 0
+
+    signal = np.array(buffer_g)
+    signal = signal - np.mean(signal)
+
+    # simple peak count
+    peaks = np.where(signal > np.std(signal))[0]
+
+    duration = times[-1] - times[0]
+
+    if duration == 0:
+        return 0
+
+    bpm = (len(peaks) / duration) * 60
+
+    if 40 <= bpm <= 180:
+        return int(bpm)
+
+    return 0
 
     try:
         duration = times[-1] - times[0]
