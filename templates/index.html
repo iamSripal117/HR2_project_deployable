@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="page-title">Welcome, {{ session['username'] }}!</h1>
+    <p class="lead">Your personal health dashboard for real-time heart rate monitoring</p>
+    <a href="/monitor" class="btn btn-primary btn-lg mt-4"><i class="fas fa-heartbeat me-2"></i> Start Monitoring</a>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-heart fa-3x text-danger mb-3"></i>
+                <h5 class="card-title">Heart Rate Monitoring</h5>
+                <p class="card-text">Accurate, real-time BPM tracking via your webcam.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-shield-alt fa-3x text-success mb-3"></i>
+                <h5 class="card-title">SECURE HEALTH DATA</h5>
+                <p class="card-text">Your heart rate readings are stored securely.</p>
+
+                {% if readings %}
+                    <ul class="list-group mt-3 text-start">
+                        {% for reading in readings %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ reading['bpm'] }} BPM
+                                <span class="badge bg-secondary">{{ reading['timestamp'] }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="mt-3 text-muted">No readings yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Dashboard Insights</h5>
+                <p class="card-text">Track your heart rate history and trends.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Health Recommendations Section -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <h4 class="card-title"><i class="fas fa-heartbeat text-danger me-2"></i>Heart Health Recommendations</h4>
+                <p class="card-text">Based on your recent heart rate readings, here are some personalized recommendations:</p>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header bg-danger text-white">
+                                <i class="fas fa-exclamation-triangle me-2"></i>High Heart Rate (>100 BPM)
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Rest and relax in a cool place</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Practice deep breathing exercises</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Drink plenty of water</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Avoid caffeine and stimulants</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Consider consulting a doctor if persistent</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header bg-success text-white">
+                                <i class="fas fa-check-circle me-2"></i>Normal Heart Rate (60-100 BPM)
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Maintain regular exercise</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Eat a balanced diet with omega-3s</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Get adequate sleep (7-9 hours)</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Manage stress through meditation</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Regular health check-ups</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header bg-warning text-dark">
+                                <i class="fas fa-exclamation-circle me-2"></i>Low Heart Rate (<60 BPM)
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Stay hydrated with electrolyte drinks</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Consume iron-rich foods (spinach, red meat)</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Try gentle exercises like walking</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Avoid sudden position changes</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Consult a doctor if symptoms persist</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form action="{{ url_for('clear_readings') }}" method="POST" class="mt-3 text-center">
+    <button type="submit" class="btn btn-outline-danger">
+        <i class="fas fa-trash-alt me-2"></i>Clear History
+    </button>
+</form>
+
+                
+                <div class="card mt-3">
+                    <div class="card-header bg-info text-white">
+                        <i class="fas fa-utensils me-2"></i>Heart-Healthy Foods
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                <i class="fas fa-apple-alt fa-2x text-danger mb-2"></i>
+                                <h6>Fruits & Berries</h6>
+                                <p class="small">Rich in antioxidants</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <i class="fas fa-fish fa-2x text-primary mb-2"></i>
+                                <h6>Fatty Fish</h6>
+                                <p class="small">High in omega-3s</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <i class="fas fa-seedling fa-2x text-success mb-2"></i>
+                                <h6>Leafy Greens</h6>
+                                <p class="small">Rich in vitamins</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <i class="fas fa-bread-slice fa-2x text-warning mb-2"></i>
+                                <h6>Whole Grains</h6>
+                                <p class="small">Good fiber source</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

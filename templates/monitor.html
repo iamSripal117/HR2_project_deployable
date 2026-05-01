@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <h2 class="page-title">Heart Rate Monitor</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 col-md-12">
+        <div class="card shadow">
+            <div class="card-body text-center">
+
+                <!-- ✅ CAMERA VIDEO -->
+                <video id="video" autoplay playsinline width="100%" class="rounded"></video>
+
+                <!-- Hidden canvas -->
+                <canvas id="canvas" style="display:none;"></canvas>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-12">
+
+        <div class="card shadow">
+            <div class="card-body text-center">
+                <h5>Your Heart Rate</h5>
+                <p id="bpmValue" class="fs-3 text-danger fw-bold">-- BPM</p>
+                <button class="btn btn-success" onclick="startMonitoring()">Start Monitoring</button>
+            </div>
+        </div>
+        <div class="card shadow">
+            <div class="card-body text-center">
+                <button class="btn btn-primary" onclick="captureReading()">Capture Reading</button>      
+            </div>
+        </div>
+
+        <div class="card shadow mt-3">
+            <div class="card-body">
+                <h5>Recent Readings</h5>
+                <ul id="readingHistory" class="list-group"></ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+let video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let ctx = canvas.getContext('2d');
+let monitoring = false;
+
+
+// =========================
+// START CAMERA
+// =========================
+async function startCamera() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+    } catch (err) {
+        alert("Camera access denied");
+    }
+}
+
+
+// =========================
+// START MONITORING
+// =========================
+function startMonitoring() {
+    monitoring = true;
+    captureLoop();
+}
+
+
+// =========================
+// CAPTURE LOOP
+// =========================
+function captureLoop() {
+    if (!monitoring) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    ctx.drawImage(video, 0, 0);
+
+    canvas.toBlob(blob => {
+        let formData = new FormData();
+        formData.append("frame", blob);
+
+        fetch('/process_frame', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            updateUI(data);
+        })
+        .catch(err => console.error(err));
+    }, 'image/jpeg');
+
+    // ⏱ send frame every 300ms
+    setTimeout(captureLoop, 300);
+}
+
+
+function captureReading() {
+    if (currentBPM <= 0) {
+        alert("No valid reading yet");
+        return;
+    }
+
+    fetch('/capture_reading', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bpm: currentBPM })
+    })
+    .then(res => res.json())
+    .then(data => {
+        updateHistory(data.readings);
+    })
+    .catch(err => console.error(err));
+}
+
+// =========================
+// UPDATE UI
+// =========================
+function updateUI(data) {
+    if (data.bpm > 0) {
+        currentBPM = data.bpm;
+        document.getElementById('bpmValue').innerText = data.bpm + " BPM";
+    }
+
+    if (data.readings) {
+        const list = document.getElementById('readingHistory');
+        list.innerHTML = '';
+
+        data.readings.forEach(r => {
+            const li = document.createElement('li');
+            li.className = "list-group-item";
+            li.innerText = `${r.bpm} BPM - ${r.timestamp}`;
+            list.appendChild(li);
+        });
+    }
+}
+
+function updateHistory(readings) {
+    const list = document.getElementById('readingHistory');
+    list.innerHTML = '';
+
+    readings.forEach(r => {
+        const li = document.createElement('li');
+        li.className = "list-group-item";
+        li.innerText = `${r.bpm} BPM - ${r.timestamp}`;
+        list.appendChild(li);
+    });
+}
+
+
+// =========================
+// INIT
+// =========================
+startCamera();
+
+</script>
+{% endblock %}
