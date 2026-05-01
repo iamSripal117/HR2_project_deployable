@@ -5,9 +5,9 @@ scipy==1.13.1
 Werkzeug==3.0.3
 gunicorn==21.2.0
 
-pip install -r requirements.txt  # to install the required packages from the requirements.txt file
+# pip install -r requirements.txt  # to install the required packages from the requirements.txt file
 
-python app.py  # to run the Flask application defined in app.py
+# python app.py  # to run the Flask application defined in app.py
 
 # Note: Make sure to have Python installed and set up in your environment before running the above commands.
 
